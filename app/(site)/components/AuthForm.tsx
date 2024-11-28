@@ -1,39 +1,38 @@
 "use client";
 
-import { BsGithub, BsGoogle } from "react-icons/bs";
-import axios from "axios";
-import { signIn, useSession } from "next-auth/react";
+import { BsGithub, BsGoogle } from "react-icons/bs"; // Import social icons for GitHub and Google.
+import axios from "axios"; // Import Axios for HTTP requests.
+import { signIn, useSession } from "next-auth/react"; // NextAuth hooks for authentication.
 
-import Button from "@/app/components/Button";
-import Input from "@/app/components/inputs/Input";
-import { useCallback, useEffect, useState } from "react";
-import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
-import AuthSocialButton from "./AuthSocialButton";
-import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import Button from "@/app/components/Button"; // Custom Button component.
+import Input from "@/app/components/inputs/Input"; // Custom Input component.
+import { useCallback, useEffect, useState } from "react"; // React hooks for state and side effects.
+import { FieldValues, SubmitHandler, useForm } from "react-hook-form"; // React Hook Form utilities.
+import AuthSocialButton from "./AuthSocialButton"; // Component for rendering social OAuth buttons.
+import toast from "react-hot-toast"; // For user notifications.
+import { useRouter } from "next/navigation"; // Router for programmatic navigation.
 
-type Variant = "LOGIN" | "REGISTER";
+type Variant = "LOGIN" | "REGISTER"; // Union type to define possible form modes.
 
 export function AuthForm() {
-  const session = useSession();
-  const router = useRouter();
-  const [variant, setVariant] = useState<Variant>("LOGIN");
-  const [isLoading, setIsLoading] = useState(false);
+  const session = useSession(); // Get the current authentication session.
+  const router = useRouter(); // Router instance for navigation.
+  const [variant, setVariant] = useState<Variant>("LOGIN"); // State for form mode (login or register).
+  const [isLoading, setIsLoading] = useState(false); // State to track loading state.
 
+  // Redirect authenticated users to the /users page.
   useEffect(() => {
     if (session.status === "authenticated") {
       router.push("/users");
     }
   }, [session?.status, router]);
 
+  // Toggle between LOGIN and REGISTER modes.
   const toggleVariant = useCallback(() => {
-    if (variant === "LOGIN") {
-      setVariant("REGISTER");
-    } else {
-      setVariant("LOGIN");
-    }
-  }, [variant]);
+    setVariant((prevVariant) => (prevVariant === "LOGIN" ? "REGISTER" : "LOGIN"));
+  }, []);
 
+  // React Hook Form setup with default values.
   const {
     register,
     handleSubmit,
@@ -46,17 +45,21 @@ export function AuthForm() {
     },
   });
 
+  // Form submission handler.
   const onSubmit: SubmitHandler<FieldValues> = (data) => {
-    setIsLoading(true);
+    setIsLoading(true); // Set loading state.
 
     if (variant === "REGISTER") {
+      // Registration flow: Send data to /api/register and then log in the user.
       axios
-        .post('/api/register', data)
+        .post("/api/register", data)
         .then(() => signIn("credentials", data))
         .catch(() => toast.error("Something went wrong"))
         .finally(() => setIsLoading(false));
     }
+
     if (variant === "LOGIN") {
+      // Login flow: Authenticate with credentials.
       signIn("credentials", {
         ...data,
         redirect: false,
@@ -67,13 +70,14 @@ export function AuthForm() {
           }
           if (callback?.ok && !callback.error) {
             toast.success("Logged in!");
-            router.push("users");
+            router.push("/users");
           }
         })
         .finally(() => setIsLoading(false));
     }
   };
 
+  // Social login handler for GitHub and Google.
   const socialAction = (action: string) => {
     setIsLoading(true);
 
@@ -101,6 +105,7 @@ export function AuthForm() {
           sm:px-10
         "
       >
+        {/* Form */}
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {variant === "REGISTER" && (
             <Input
@@ -137,6 +142,7 @@ export function AuthForm() {
           </div>
         </form>
 
+        {/* Social Login */}
         <div className="mt-6">
           <div className="relative">
             <div
@@ -167,6 +173,8 @@ export function AuthForm() {
             />
           </div>
         </div>
+
+        {/* Toggle between Login and Register */}
         <div
           className="
             flex 
